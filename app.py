@@ -1,3 +1,6 @@
+import nltk
+nltk.download('vader_lexicon')
+
 import streamlit as st
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from sklearn.feature_extraction.text import TfidfVectorizer

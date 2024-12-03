@@ -1,72 +1,72 @@
 import streamlit as st
 import requests
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import pandas as pd
 
-# Ahrefs API Key (replace with your actual API key)
-AHREFS_API_KEY = "wwBw9eR3dnDNZz_1nk1gyBqa7HhRLJEKhRl7DIgm"
+# Initialize Sentiment Analyzer
+sia = SentimentIntensityAnalyzer()
 
-# Function to Fetch SERP Results
-def get_serp_results(domain, api_key):
-    url = "https://apiv2.ahrefs.com"
+# Embed your Ahrefs API token here
+API_TOKEN = "gy0w35-eaNFP6v6vgrb_GIs6cp13SNG70Tk0TdPk"
+
+# Function to fetch top 10 organic results using Ahrefs API
+def fetch_organic_results(keyword):
+    url = "https://api.ahrefs.com/v3/serp-overview/serp-overview"
+    headers = {
+        "Authorization": f"Bearer gy0w35-eaNFP6v6vgrb_GIs6cp13SNG70Tk0TdPk",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+    }
     params = {
-        "token": api_key,
-        "from": "positions_metrics",  # Adjust as needed
-        "target": domain,  # Adjust based on your table's requirement
-        "mode": "domain",  # Adjust mode based on target type
-        "select": "position,url,title",
-        "output": "json",
-        "limit": 10
+        "q": keyword,
+        "limit": 10,
+        "token": "gy0w35-eaNFP6v6vgrb_GIs6cp13SNG70Tk0TdPk"
     }
     response = requests.get(url, params=params)
-
     if response.status_code == 200:
-        data = response.json()
-        st.write("API Response (Debug):", data)
-        if "positions_metrics" in data:
-            results = [
-                {
-                    "Position": item.get("position", "N/A"),
-                    "URL": item.get("url", "N/A"),
-                    "Title": item.get("title", "N/A")
-                }
-                for item in data["positions_metrics"]
-            ]
-            return results
-        else:
-            st.error("The 'positions_metrics' key is missing in the API response.")
-            return []
+        return response.json().get('organic', [])
     else:
-        st.error(f"Error fetching SERP results: {response.status_code}")
-        st.write("Response Text (Debug):", response.text)  # Add debug response text
+        st.error(f"Error fetching organic results: {response.status_code}")
+        st.write("Response Body (Debug):", response.text)
         return []
 
-# Initialize selected URLs list
-selected_urls = []
+# Function to perform sentiment analysis
+def analyze_sentiment(text):
+    return sia.polarity_scores(text)
 
-# Streamlit Sidebar for Keyword Input
-st.sidebar.header("Keyword Input")
-keyword = st.sidebar.text_input("Enter a keyword for SERP analysis")
+# Streamlit App
+def main():
+    st.title("Keyword Sentiment Analysis Tool")
 
-if keyword:
-    st.sidebar.write("Fetching SERP results...")
-    serp_results = get_serp_results(keyword, AHREFS_API_KEY)
+    # Step 1: User Input
+    keyword = st.text_input("Enter a keyword:")
+    user_url = st.text_input("Enter your URL:")
 
-    # Display SERP Results with Checkboxes
-    if serp_results:
-        st.sidebar.write("Top 10 SERP Results:")
-        for result in serp_results:
-            # Display checkbox for each URL
-            selected = st.sidebar.checkbox(
-                f"({result['Position']}) {result['Title']}",
-                key=result["URL"]
-            )
-            if selected:
-                selected_urls.append(result["URL"])
+    if st.button("Analyze"):
+        if not keyword or not user_url:
+            st.error("Please fill in both fields!")
+            return
 
-# Display Selected URLs
-if selected_urls:
-    st.sidebar.subheader("Selected URLs:")
-    for url in selected_urls:
-        st.sidebar.write(url)
-else:
-    st.sidebar.write("No URLs selected yet.")
+        # Step 2: Fetch Top 10 Organic Results
+        st.write(f"Fetching top 10 organic results for keyword: {keyword}")
+        organic_results = fetch_organic_results(keyword)
+
+        if not organic_results:
+            st.warning("No results found.")
+            return
+
+        # Step 3: Perform Sentiment Analysis
+        st.write("Performing sentiment analysis on the results...")
+        results = []
+        for result in organic_results:
+            url = result.get("url", "N/A")
+            title = result.get("title", "No Title")
+            sentiment = analyze_sentiment(title)
+            results.append({"URL": url, "Title": title, "Sentiment": sentiment})
+
+        # Step 4: Display Results
+        st.subheader("Sentiment Analysis Results")
+        results_df = pd.DataFrame(results)
+        st.dataframe(results_df)
+
+if __name__ == "__main__":
+    main()

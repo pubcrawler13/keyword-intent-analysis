@@ -4,6 +4,27 @@ import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 
+# Set the page configuration
+st.set_page_config(
+    page_title="Primary Keywords Search Intent Analysis Tool",
+    layout="wide"
+)
+
+# Apply custom CSS for dropdown and file uploader widths
+st.markdown(
+    """
+    <style>
+    div[data-baseweb="select"] {
+        width: 250px !important; /* Dropdown width */
+    }
+    div.stFileUploader {
+        width: 750px !important; /* File uploader width */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Ahrefs API Token
 API_TOKEN = "rKMvQKYP6NdrHqVAgZUoqNPvhy4XaGGM7Fpk5Crh"
 
@@ -105,7 +126,12 @@ def main():
     st.write("Fetch and classify top 10 organic results for each keyword.")
 
     # Country selection
-    country = st.selectbox("Select your country:", ["us", "ca", "gb", "au", "de", "fr", "in", "jp", "cn"])
+    country = st.selectbox("Select your country:", [
+    "us", "ae", "ar", "at", "au", "be", "br", "ca", "ch", "cn", "cz", 
+    "de", "dk", "es", "fi", "fr", "gr", "hk", "hu", "id", "ie", "il", 
+    "in", "it", "jp", "kr", "mx", "my", "nl", "no", "nz", "ph", "pl", 
+    "pt", "ru", "sa", "se", "sg", "th", "tr", "tw", "uk", "vn", "za"
+])
 
     input_type = st.radio("Choose input type:", ["Upload CSV", "Enter URL"])
     keywords = None
